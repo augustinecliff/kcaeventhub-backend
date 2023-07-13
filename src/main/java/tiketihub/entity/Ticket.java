@@ -30,4 +30,5 @@ public class Ticket {
     private String ticket_status;
     private Date date_of_issue;
     private Date expiry_date;
+
 }

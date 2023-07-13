@@ -5,6 +5,7 @@ import lombok.Data;
 
 import java.util.List;
 
+//This will be the session controller
 @Entity
 @Data
 @Table(name = "organized_event")

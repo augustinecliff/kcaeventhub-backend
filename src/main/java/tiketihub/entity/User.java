@@ -2,13 +2,16 @@ package tiketihub.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
 @Entity
 @Data
 @Table(name = "user_table")
+
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -21,13 +24,34 @@ public class User {
     private List<Email> emails;
     private String firstName;
     private String lastName;
-    private String Email;
+    private String username;
+    private String email;
     private String password;
-    private String recoveryEmail;
-    private String dateOfBirth;
+    private String confirmPassword;
+    private LocalDate dateOfBirth;
     private Gender gender;
 
     public enum Gender {
-        MALE,FEMALE
+        MALE,FEMALE,OTHER
     }
+
+    public String toString() {
+        return "\n...................................\n"
+                +"firstName        :" + firstName + "\n"
+                +"lastName         :" + lastName + "\n"
+                +"username         :" + username + "\n"
+                +"password         :" + password + "\n"
+                +"confirm password :" + confirmPassword + "\n"
+                +"Email            :" + email + "\n"
+                +"dateOfBirth      :" + dateOfBirth + "\n"
+                +"gender           :" + gender + ".\n"
+                +".................................\n";
+    }
+    public void encodePassword(PasswordEncoder encoder) {
+
+
+        this.password =  encoder.encode(password);
+    }
+
+
 }

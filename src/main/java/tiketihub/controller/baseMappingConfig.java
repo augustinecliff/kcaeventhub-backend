@@ -4,5 +4,5 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class baseMappingConfig {
-    static final String base = "/ticket";
+    public static final String base = "/ticket";
 }

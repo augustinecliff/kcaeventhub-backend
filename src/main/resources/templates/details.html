@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Details</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f2f2f2;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 100vh;
+    }
+
+    .user-details-container {
+      background-color: #fff;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      max-width: 500px;
+      margin: 50px auto;
+    }
+
+    .user-details-container h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #4CAF50;
+    }
+
+    .user-details-container table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .user-details-container table tr td {
+      padding: 10px;
+      border-bottom: 1px solid #ccc;
+    }
+
+    .user-details-container table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .user-details-container .gender {
+      text-transform: capitalize;
+    }
+
+    .user-details-container a {
+      color: #007bff;
+      text-decoration: none;
+      font-weight: bold;
+      display: inline-block;
+      padding: 12px 60px; /* Fixed width for the buttons */
+      background-color: #007bff;
+      color: #fff;
+      border-radius: 6px;
+      transition: background-color 0.3s ease;
+    }
+
+    .user-details-container a:hover {
+      text-decoration: none;
+      background-color: #0056b3;
+    }
+
+    .btn-container {
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+    }
+
+    .btn {
+      padding: 12px 60px; /* Fixed width for the buttons */
+      background-color: #007bff;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 6px;
+      margin: 10px;
+      transition: background-color 0.3s ease;
+      border: none;
+    }
+
+    .btn:hover {
+      background-color: #0056b3;
+    }
+
+    footer {
+      background-color: #f4f4f4;
+      padding: 1rem;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+<div class="user-details-container">
+  <h2>User Details</h2>
+  <table>
+    <tr>
+      <td><strong>First Name:</strong></td>
+      <td id="first-name" th:text="${currentUser.firstName}"></td>
+    </tr>
+    <tr>
+      <td><strong>Last Name:</strong></td>
+      <td id="last-name" th:text="${currentUser.lastName}"></td>
+    </tr>
+    <tr>
+      <td><strong>Username:</strong></td>
+      <td id="email" th:text="${currentUser.username}">........................</td>
+    </tr>
+    <tr>
+      <td><strong>Email:</strong></td>
+      <td id="email" th:text="${currentUser.email}"></td>
+    </tr>
+    <tr>
+      <td><strong>Date of Birth:</strong></td>
+      <td id="date-of-birth" th:text="${currentUser.dateOfBirth}"></td>
+    </tr>
+    <tr>
+      <td><strong>Gender:</strong></td>
+      <td id="gender" class="gender" th:text="${currentUser.gender}"></td>
+    </tr>
+  </table>
+  <div class="btn-container">
+    <form th:action="@{/logout}" method="post">
+      <input type="submit" value="Log Out" class="btn" />
+    </form>
+    <a th:href="@{/ticket/home}" class="btn">Home</a>
+  </div>
+</div>
+<footer>
+  <p>&copy; 2023 Event Booking App. All rights reserved.</p>
+</footer>
+</body>
+</html>

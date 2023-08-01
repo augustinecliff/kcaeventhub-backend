@@ -59,8 +59,9 @@
 </head>
 <body>
 <div class="create-account-container">
+  <p th:if="${emailError != ''}" th:text="${emailError}" style="color: #e80808"></p>
   <h2>Create Account</h2>
-  <form th:action="@{/ticket/createAccount}" th:object="${user}"  method="post">
+  <form th:action="@{/TiketiHub/createAccount}" th:object="${user}"  method="post">
     <input type="text" name="firstName" placeholder="First Name" />
     <input type="text" name="lastName" placeholder="Last Name" />
     <input type="email" name="email" placeholder="Email" />

@@ -108,7 +108,7 @@
     </tr>
     <tr>
       <td><strong>Username:</strong></td>
-      <td id="email" th:text="${currentUser.username}">........................</td>
+      <td id="email" th:text="${currentUser.username}"></td>
     </tr>
     <tr>
       <td><strong>Email:</strong></td>
@@ -122,12 +122,16 @@
       <td><strong>Gender:</strong></td>
       <td id="gender" class="gender" th:text="${currentUser.gender}"></td>
     </tr>
+    <tr>
+      <td><strong>Roles:</strong></td>
+      <td id="roles" class="role" th:each="role : ${roles}"th:value="${role}" th:text="${role.name}"></td>
+    </tr>
   </table>
   <div class="btn-container">
     <form th:action="@{/logout}" method="post">
       <input type="submit" value="Log Out" class="btn" />
     </form>
-    <a th:href="@{/ticket/home}" class="btn">Home</a>
+    <a th:href="@{/TiketiHub/home}" class="btn">Home</a>
   </div>
 </div>
 <footer>

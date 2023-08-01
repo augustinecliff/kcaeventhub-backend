@@ -77,13 +77,13 @@
   </div>
   <form th:action="@{/login}"  method="POST">
     <p class="error" th:text="${errorMessage}" th:if="${errorMessage != ''}"></p>
-    <input type="text" name="username" placeholder="Username" required>
+    <input type="text" name="username" placeholder="email" required>
     <input type="password" name="password" placeholder="Password" required>
     <button type="submit">Login</button>
   </form>
   <div class="options">
     <a href="#">Forgot Password?</a>
-    <a th:href="@{ticket/createAccount}">Create Account</a>
+    <a th:href="@{TiketiHub/createAccount}">Create Account</a>
   </div>
 </div>
 </body>

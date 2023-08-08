@@ -4,10 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Past;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -44,7 +41,7 @@ public class User implements Serializable {
     @NotNull
     private String userRole;
 
-    public User buildUser(UserDTO user) {
+    public static User buildUser(UserDTO user) {
         User user1 = new User();
         user1.setFirstName(user.getFirstName());
         user1.setLastName(user.getLastName());

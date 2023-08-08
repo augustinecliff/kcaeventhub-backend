@@ -7,6 +7,13 @@ import tiketihub.authentication.response.AuthResponse;
 public class TokenDTO {
     private AuthResponse authResponse;
     private String token;
-    private boolean status;
+    private String purpose;
+
+    public String toString() {
+        return "\nauthResponse= " + authResponse.getStatus() + "::" +
+                authResponse.getMessage() + "\n" +
+                "token='" + token + "\n" +
+                "purpose='" + purpose + "\n";
+    }
 
 }

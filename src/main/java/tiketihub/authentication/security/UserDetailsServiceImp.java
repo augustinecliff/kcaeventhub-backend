@@ -1,4 +1,4 @@
-package tiketihub.config.security;
+package tiketihub.authentication.security;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -23,6 +23,7 @@ public class UserDetailsServiceImp implements UserDetailsService {
         return new UserSession(
                 user.getEmail(),
                 user.getPassword(),
-                user.getUserRole());
+                user.getUserRole(),
+                user.getId());
     }
 }

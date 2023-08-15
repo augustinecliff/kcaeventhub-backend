@@ -1,4 +1,4 @@
-package tiketihub.authentication.security;
+package tiketihub.authentication.security.jwt;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -22,21 +22,22 @@ public class JWTUtil {
     @Value("${jwt.secret}")
     private String secretKey;
     @Value("${jwt.expiration}")
-    private long exprationTime;
+    private long expirationTime;
 
     private Key jwtKey() {
         return Keys.hmacShaKeyFor(Decoders.BASE64URL.decode(secretKey));
     }
+    Map<String,Object> claims = new HashMap<>();
 
     public String generateJwtAuthenticationToken(Authentication authentication) {
         UserSession userPrincipal = (UserSession) authentication.getPrincipal();
 
-        Date expirationDate = new Date(new Date().getTime() + exprationTime);
+        Date expirationDate = new Date(new Date().getTime() + expirationTime);
 
         /*Map<String, Object> claims = new HashMap<>();
         claims.put("email", userPrincipal.getEmail());*/
         log.info("\nUser to be authenticated has the email : ("+userPrincipal.getEmail()+")");
-        Map<String,Object> claims = new HashMap<>();
+        claims = new HashMap<>();
         claims.put("userId", userPrincipal.getUserId());
         claims.put("email", userPrincipal.getEmail());
         return Jwts.builder()
@@ -60,9 +61,12 @@ public class JWTUtil {
     }
 
 
-    public String generatePasswordConfigToken(String email, Date exprationDate) {
+    public String generatePasswordConfigToken(JwtDTO jwtDTO, Date exprationDate) {
+        claims = new HashMap<>();
+        claims.put("userId",jwtDTO.getUserId());
+        claims.put("email",jwtDTO.getEmail());
         return Jwts.builder()
-                .setSubject(email)
+                .setClaims(claims)
                 .setIssuedAt(new Date())
                 .setExpiration(exprationDate)
                 .signWith(jwtKey(),SignatureAlgorithm.HS256)

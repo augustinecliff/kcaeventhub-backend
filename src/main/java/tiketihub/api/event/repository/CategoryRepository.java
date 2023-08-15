@@ -11,5 +11,4 @@ import tiketihub.api.event.model.Category;
 
 @Repository
 public interface CategoryRepository extends CrudRepository<Category, Long> {
-
 }

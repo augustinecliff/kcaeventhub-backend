@@ -1,4 +1,4 @@
-package tiketihub.authentication.security;
+package tiketihub.authentication.security.jwt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
@@ -27,7 +27,7 @@ public class GptAuthenticationEntryPoint implements AuthenticationEntryPoint {
         String s = s = "Unauthorized";
 
         String token = request.getHeader("Authorization");
-        if (!token.isEmpty()) {
+        if (!token.isBlank()) {
             if (jwt.validateToken(token.substring(7))) {
                 responseCode = HttpServletResponse.SC_FORBIDDEN;
                 s = "Forbidden access";

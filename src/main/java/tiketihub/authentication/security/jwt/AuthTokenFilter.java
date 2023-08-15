@@ -1,4 +1,4 @@
-package tiketihub.authentication.security;
+package tiketihub.authentication.security.jwt;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -14,6 +14,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 import tiketihub.authentication.exceptions.BlackListedTokenException;
 import tiketihub.authentication.exceptions.InvalidTokenException;
+import tiketihub.authentication.security.UserDetailsServiceImp;
 import tiketihub.authentication.security.dto.JwtDTO;
 
 import java.io.IOException;

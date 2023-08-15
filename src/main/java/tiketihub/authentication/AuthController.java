@@ -13,7 +13,7 @@ import tiketihub.authentication.exceptions.InvalidEmailException;
 import tiketihub.authentication.exceptions.InvalidUserCredentialException;
 import tiketihub.authentication.exceptions.UserAlreadyExistsException;
 import tiketihub.authentication.response.AuthResponse;
-import tiketihub.authentication.security.JWTUtil;
+import tiketihub.authentication.security.jwt.JWTUtil;
 import tiketihub.user.UserDTO;
 
 @RestController
@@ -101,6 +101,7 @@ public class AuthController {
     @PostMapping("/forgot-password")
     public ResponseEntity<AuthResponse<TokenDTO>> forgotPassword(@RequestBody EmailDTO emailDTO) {
         try {
+
             String resetToken = authService.validateEmailAndGenerateResetPasswordToken(emailDTO);
             tokenDTO = new TokenDTO();
             tokenDTO.setToken(resetToken);
@@ -135,13 +136,13 @@ public class AuthController {
         try {
             authService.validateAndSet(passwardDTO, token);
             tokenDTO = new TokenDTO();
-            tokenDTO.setToken("");
+            tokenDTO.setToken(token);
             tokenDTO.setPurpose("Set password");
             log.info(tokenDTO.toString());
             AuthResponse<TokenDTO> response = new AuthResponse<>(
                     HttpStatus.ACCEPTED,
                     "User credentials have been updated successfully",
-                    tokenDTO
+                    null
             );
             return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
         }
@@ -153,7 +154,7 @@ public class AuthController {
             AuthResponse<TokenDTO> response = new AuthResponse<>(
                     HttpStatus.CONFLICT,
                     exc.getMessage(),
-                    tokenDTO
+                    null
             );
             return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
         }

@@ -2,9 +2,9 @@ package tiketihub.api.event.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import tiketihub.api.event.dto.EventParticipantDto;
 import tiketihub.user.User;
 
-import java.util.Optional;
 import java.util.UUID;
 
 @Data
@@ -19,5 +19,11 @@ public class EventParticipant {
     @OneToOne(targetEntity = User.class)
     private User user;
 
+
+    public static EventParticipant addParticipant(EventParticipantDto participantDto) {
+        EventParticipant participant = new EventParticipant();
+        participant.setRole(participantDto.getRole());
+        participant.setUser(participantDto.getUser());
+        return participant;
+    }
 }
-// payment will be attached here.

@@ -1,5 +1,6 @@
 package tiketihub.authentication;
 
+import jakarta.mail.MessagingException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -11,8 +12,10 @@ import tiketihub.authentication.dto.EmailDTO;
 import tiketihub.authentication.dto.LoginDTO;
 import tiketihub.authentication.dto.PasswardDTO;
 import tiketihub.authentication.exceptions.*;
+import tiketihub.authentication.security.dto.JwtDTO;
 import tiketihub.emailconfig.EmailConfig;
-import tiketihub.authentication.security.JWTUtil;
+import tiketihub.authentication.security.jwt.JWTUtil;
+import tiketihub.emailconfig.templates.EmailTemplates;
 import tiketihub.user.User;
 import tiketihub.user.UserDTO;
 import tiketihub.user.UserRepository;
@@ -58,7 +61,11 @@ public class AuthService {
 
 
            //TODO :  Send email through 'message broker' ... (for setting the password)
-           String token = jwtUtil.generatePasswordConfigToken(currentUser.getEmail(),
+           String token = jwtUtil.generatePasswordConfigToken(
+                   new JwtDTO(
+                   String.valueOf(currentUser.getId()),
+                   currentUser.getEmail()
+           ),
                    new Date(new Date().getTime() + 1800000));// 30 mins
            email.sendSimpleEmail(currentUser.getEmail(),"Configure account password" , token);
            return token;
@@ -71,16 +78,22 @@ public class AuthService {
     public void validateAndSet(PasswardDTO passwardDTO,String token) {
         if (jwtUtil.validateToken(token)) {
             log.info("\npassword: " + passwardDTO.getPassword()+
-                    "\nconfirmpassword: "+ passwardDTO.getConfirmPassword());
+                    "\nconfirmPassword: "+ passwardDTO.getConfirmPassword());
         if (passwardDTO.getPassword() != null &&
                 passwardDTO.getConfirmPassword() != null &&
                 passwardDTO.getPassword().contentEquals(passwardDTO.getConfirmPassword())) {
             if (passwardDTO.getPassword().length() >= 8) {
-               UUID userId = UUID.fromString(jwtUtil.getUserIdAndEmailFromToken(token).getUserId());
-               userRepo.findById(userId).
+               String userEmail = jwtUtil.getUserIdAndEmailFromToken(token).getEmail();
+               userRepo.findByEmail(userEmail).
                         ifPresent(user -> {
                             user.setPassword(passwordEncoder.encode(passwardDTO.getPassword()));
                             userRepo.save(user);
+                            EmailTemplates template = new EmailTemplates();
+                            try {
+                                email.sendMailWithAttachment(userEmail,"New account registration",template.getNewUser());
+                            } catch (MessagingException e) {
+                                throw new RuntimeException(e);
+                            }
                         });
             }
             else throw new InvalidPasswordException("The password should contain at-least 8 characters");
@@ -94,13 +107,15 @@ public class AuthService {
         if (userRepo.existsByEmail(emailDTO.getEmail())) {
             String token = jwtUtil.
                     generatePasswordConfigToken(
-                            emailDTO.getEmail(),
+                            new JwtDTO(
+                                    null,
+                                    emailDTO.getEmail()
+                            ),
                             new Date(new Date().getTime()+1800000));// 30 mins
-            email.sendSimpleEmail(emailDTO.getEmail(),"Forgot password" , token);
+            email.sendSimpleEmail(emailDTO.getEmail(), "Forgot password" , token);
 
             return token;
         }
         else throw new InvalidEmailException("The email you entered does not exist");
     }
-
 }

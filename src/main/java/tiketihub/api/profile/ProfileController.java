@@ -4,14 +4,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 import tiketihub.api.ApiResponse;
-import tiketihub.authentication.exceptions.InvalidTokenException;
-import tiketihub.user.User;
 import tiketihub.user.UserDTO;
-
-import java.util.UUID;
 
 @RestController
 @Slf4j
@@ -41,9 +36,9 @@ public class ProfileController {
             ApiResponse<UserDTO> response = new ApiResponse<>(
                     HttpStatus.OK,
                     exc.getMessage(),
-                    profileService.validateTokenAndFetchProfile(authToken)
+                    null
             );
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
     }
     @PatchMapping("/edit")

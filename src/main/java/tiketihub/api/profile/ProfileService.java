@@ -5,7 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import tiketihub.authentication.exceptions.InvalidTokenException;
-import tiketihub.authentication.security.JWTUtil;
+import tiketihub.authentication.security.jwt.JWTUtil;
 import tiketihub.user.User;
 import tiketihub.user.UserDTO;
 import tiketihub.user.UserRepository;

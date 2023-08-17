@@ -16,7 +16,7 @@ public class EventParticipant {
 
     private String role;
 
-    @OneToOne(targetEntity = User.class)
+    @ManyToOne(targetEntity = User.class)
     private User user;
 
 

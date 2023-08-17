@@ -33,18 +33,6 @@ public class EventDetailsDto {
         this.description = event.getDescription();
         this.category = CategoryDto.CategoryToCategoryDtoConversion(event.getCategory());
     }
-    public EventDetailsDto(Event event,boolean includeHost) {
-        this.title = event.getTitle();
-        this.startDate = event.getStartDate();
-        this.endDate = event.getEndDate();
-        this.duration = event.getDuration();
-        this.pricing = event.getPricing();
-        this.venue = event.getVenue();
-        this.capacity = event.getCapacity();
-        this.ageRestriction = event.getAgeRestriction();
-        this.description = event.getDescription();
-        this.category = CategoryDto.CategoryToCategoryDtoConversion(event.getCategory());
-    }
 
     public static EventUserAccessLevelDto hostUser(Event event) {
         for (EventParticipant participant : event.getParticipants()) {

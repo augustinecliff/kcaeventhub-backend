@@ -17,6 +17,7 @@ import tiketihub.api.event.service.EventService;
 import tiketihub.authentication.dto.EmailDTO;
 
 
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -35,7 +36,7 @@ public class EventController {
     public ResponseEntity<ApiResponse<Iterable<Category>>> eventCategories() {
         try {
 
-            return ResponseEntity.status(HttpStatus.OK).body(
+                        return ResponseEntity.status(HttpStatus.OK).body(
                     new ApiResponse<>(
                             HttpStatus.OK,
                             "EventCategories",
@@ -136,7 +137,7 @@ public class EventController {
         try {
             authToken = authToken.replace("Bearer ", "");
             log.info(String.valueOf(id));
-            AddUserAsHostDto addUser = service.addNewUser(id,addUserDto,authToken);
+            AddUserAsHostDto addUser = service.enrollUserAsHost(id,addUserDto,authToken);
             return ResponseEntity.status(HttpStatus.OK).body(
                     new ApiResponse<>(
                             HttpStatus.OK,
@@ -154,9 +155,9 @@ public class EventController {
                     ));
         }
     }
-    @GetMapping("/host/viewparticipants")
+    @GetMapping("/host/viewparticipants/{eventId}")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<ApiResponse<Set<EventParticipant>>> participantsToEvent(@RequestParam("eventId")UUID id,
+    public ResponseEntity<ApiResponse<Set<EventParticipant>>> participantsToEvent(@PathVariable("eventId")UUID id,
                                                                                   @RequestHeader("Authorization")String authToken) {
         try {
             authToken = authToken.replace("Bearer ", "");
@@ -187,14 +188,93 @@ public class EventController {
                                                                                   @RequestHeader("Authorization")String authToken) {
         try {
             authToken = authToken.replace("Bearer ", "");
-            log.info(String.valueOf(eventId));
-            String participant = service.deleteParticipant(eventId, participantId, authToken);
 
-            return ResponseEntity.status(HttpStatus.OK).body(
+            String participant = service.deleteParticipant(eventId, participantId, authToken);
+                                    return ResponseEntity.status(HttpStatus.OK).body(
                     new ApiResponse<>(
                             HttpStatus.OK,
                             "Participant "+participant+"has been removed successfully successfully!",
                             null
+                    ));
+        }
+        catch (Exception e) {
+            log.info(e.getMessage());
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(
+                    new ApiResponse<>(
+                            HttpStatus.CONFLICT,
+                            e.getMessage(),
+                            null
+                    ));
+        }
+    }
+
+    @PatchMapping("/host/archive-event/{eventId}")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<ApiResponse<EventDetailsDto>> archiveEventAsHost(@PathVariable("eventId") UUID eventId,
+                                                                                      @RequestHeader("Authorization")String authToken) {
+        try {
+            authToken = authToken.replace("Bearer ", "");
+
+
+            EventDetailsDto details = service.archiveEvent(eventId, authToken);
+
+            return ResponseEntity.status(HttpStatus.OK).body(
+                    new ApiResponse<>(
+                            HttpStatus.OK,
+                            "Event '"+details.getTitle()+"' has been archived successfully!",
+                            details
+                    ));
+        }
+        catch (Exception e) {
+            log.info(e.getMessage());
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(
+                    new ApiResponse<>(
+                            HttpStatus.CONFLICT,
+                            e.getMessage(),
+                            null
+                    ));
+        }
+    }
+    @GetMapping("/events")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<ApiResponse<List<EventDetailsDto>>> browseEvents(@RequestHeader("Authorization")String authToken) {
+        try {
+            authToken = authToken.replace("Bearer ", "");
+
+            List<EventDetailsDto> details = service.browseAllEvents();
+
+            return ResponseEntity.status(HttpStatus.OK).body(
+                    new ApiResponse<>(
+                            HttpStatus.OK,
+                            "All events fetched successfully!",
+                            details
+                    ));
+        }
+        catch (Exception e) {
+            log.info(e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(
+                    new ApiResponse<>(
+                            HttpStatus.CONFLICT,
+                            e.getMessage(),
+                            null
+                    ));
+        }
+
+    }
+    @PatchMapping("/guest/enroll/{eventId}")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<ApiResponse<String>> enrollToEventAsUser(@PathVariable("eventId")UUID id,
+                                                                       @RequestHeader("Authorization")String authToken) {
+        try {
+            authToken = authToken.replace("Bearer ", "");
+            log.info(String.valueOf(id));
+            String addedUserEmail = service.selfEnrollUser(id,authToken);
+            return ResponseEntity.status(HttpStatus.OK).body(
+                    new ApiResponse<>(
+                            HttpStatus.OK,
+                            "New user with email: "+addedUserEmail+"been added successfully!",
+                            addedUserEmail
                     ));
         }
         catch (Exception e) {

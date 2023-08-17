@@ -22,9 +22,11 @@ import tiketihub.emailconfig.EmailConfig;
 import tiketihub.emailconfig.templates.EmailTemplates;
 import tiketihub.user.UserRepository;
 
-import java.util.Optional;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 @Service
 @Slf4j
@@ -100,7 +102,7 @@ public class EventService {
     public EventDetailsDto viewEventDetails(UUID id) {
         log.info(String.valueOf(eventRepo.findById(id)));
         return eventRepo.findById(id)
-                .map(event -> new EventDetailsDto(event,true))
+                .map(EventDetailsDto::new)
                 .orElseThrow(() -> new EventNotFoundException("Event id not found!"));
     }
 
@@ -125,7 +127,7 @@ public class EventService {
     }
 
 
-    public AddUserAsHostDto addNewUser(UUID id, AddUserAsHostDto addUserDto, String token) {
+    public AddUserAsHostDto enrollUserAsHost(UUID id, AddUserAsHostDto addUserDto, String token) {
         log.info(("addNewUser() -> point: 1"));
         return eventRepo.findById(id)
                 .map(event -> {
@@ -133,6 +135,14 @@ public class EventService {
                     if (addUserDto.getAccessLevel().contentEquals("HOST")) throw new UserAlreadyExistsException("Event cannot have 2 Hosts");
                     log.info(("point: 3"));
                     if (eventUserAccessLevel(event, token).contentEquals("HOST")) {
+                        boolean expected = false;
+                        String email =  jwtUtil.getUserIdAndEmailFromToken(token).getEmail();
+                        if (isUserAnEventMember(event,
+                                jwtUtil.getUserIdAndEmailFromToken(token).getEmail()) == expected) {
+
+                        if (isUserAnEventMember(event, email)) {
+                            throw new UserAlreadyExistsException(email+" is already a member of '"+event.getTitle()+"'");
+                        }
                         log.info(("point: 4"));
                         EventParticipantDto participantDto = new EventParticipantDto();
                         participantDto.setRole(addUserDto.getAccessLevel());
@@ -148,8 +158,36 @@ public class EventService {
                         log.info(("point: 8"));
                         log.info("Participant added.");
                         return addUserDto;
+                        }
+                        else throw new UserAlreadyExistsException(email+" is already a member of '"+event.getTitle()+"'");
                     }
                     else throw new AccessDeniedException("Access to denied :Only Host can manually add host/guest");
+                }).orElseThrow(() -> new EventNotFoundException("Event id not found!"));
+    }
+    public String selfEnrollUser(UUID id, String token) {
+        log.info(("addNewUser() -> point: 1"));
+        return eventRepo.findById(id)
+                .map(event -> {
+                    log.info(("point: 2"));
+                    String email = jwtUtil.getUserIdAndEmailFromToken(token).getEmail();
+                    boolean expected = false;
+                    if (isUserAnEventMember(event, email) == expected) {
+                        log.info(("point: 3"));
+                        EventParticipantDto participantDto = new EventParticipantDto();
+                        participantDto.setRole("GUEST");
+
+                        participantDto.setUser(userRepo.findByEmail(email)
+                                .orElseThrow(() -> new UsernameNotFoundException(
+                                        "The user with email "+email+" does not exist!")));
+                        log.info(("point: 4"));
+                        event.getParticipants().add(participantRepo.save(EventParticipant.addParticipant(participantDto)));
+                        log.info(("point: 5"));
+                        eventRepo.save(event);
+                        log.info(("point: 6"));
+                        log.info("Participant added.");
+                        return email;
+                    }
+                    else throw new UserAlreadyExistsException(email+" is already a member of '"+event.getTitle()+"'");
                 }).orElseThrow(() -> new EventNotFoundException("Event id not found!"));
     }
     private String eventUserAccessLevel(Event event,String token) {
@@ -165,7 +203,13 @@ public class EventService {
                 .contentEquals(jwtUtil.getUserIdAndEmailFromToken(token).getUserId())) {
             return "GUEST";
         }
-        return null;
+        return "";
+    }
+    private boolean isUserAnEventMember(Event existingEvent, String email) {
+
+        return existingEvent.getParticipants().stream()
+                .anyMatch(event -> event.getUser().getEmail().contentEquals(email));
+
     }
 
     public Set<EventParticipant> viewEventParticipants(UUID id, String token) {
@@ -200,27 +244,24 @@ public class EventService {
                 })
                 .orElseThrow(() -> new ParticipantNotFoundException("No user with the specified id found!"));
     }
-    /*public String deleteParticipant(UUID eventId, UUID participantId, String token) {
-        return eventRepo.findById(eventId)
+
+    public EventDetailsDto archiveEvent(UUID eventId, String token) {
+        eventRepo.findById(eventId)
                 .map(event -> {
-                    if (eventUserAccessLevel(event, token).contentEquals("HOST")) {
-                        Optional<EventParticipant> participantToDelete = event.getParticipants()
-                                .stream()
-                                .filter(participant -> participant.getId().equals(participantId))
-                                .findFirst();
-
-                        if (participantToDelete.isPresent()) {
-                            event.getParticipants().remove(participantToDelete.get());
-                            participantRepo.delete(participantToDelete.get());
-                            return String.valueOf(participantId);
-                        } else {
-                            throw new ParticipantNotFoundException("No participant with the specified id exists");
-                        }
-                    } else {
-                        throw new AccessDeniedException("Access denied: Only Host can delete participants");
+                    if(eventUserAccessLevel(event, token)
+                            .contentEquals("HOST")) {
+                        event.setActive(false);
+                        eventRepo.save(event);
+                        return new EventDetailsDto(event);
                     }
-                })
-                .orElseThrow(() -> new ParticipantNotFoundException("No event with the specified id found!"));
-    }*/
+                    else throw new AccessDeniedException("Access denied :Only Host can archive event");
+                });
+        return viewEventDetails(eventId);
+    }
 
+    public List<EventDetailsDto> browseAllEvents() {
+        return eventRepo.findAllByActive(true).stream()
+                .map(EventDetailsDto::new)
+                .toList();
+    }
 }

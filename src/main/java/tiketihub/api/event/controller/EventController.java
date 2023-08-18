@@ -1,9 +1,6 @@
 package tiketihub.api.event.controller;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -14,11 +11,8 @@ import tiketihub.api.event.model.Category;
 import tiketihub.api.event.model.Event;
 import tiketihub.api.event.model.EventParticipant;
 import tiketihub.api.event.service.EventService;
-import tiketihub.authentication.dto.EmailDTO;
 
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 

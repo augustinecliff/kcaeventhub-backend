@@ -7,9 +7,11 @@ import tiketihub.api.event.model.EventParticipant;
 import tiketihub.user.User;
 
 import java.time.LocalDate;
+import java.util.UUID;
 
 @Data
 public class EventDetailsDto {
+    private UUID eventId;
     private String title;
     private LocalDate startDate;
     private LocalDate endDate;
@@ -22,6 +24,7 @@ public class EventDetailsDto {
     private CategoryDto category;
 
     public EventDetailsDto(Event event) {
+        this.eventId = event.getId();
         this.title = event.getTitle();
         this.startDate = event.getStartDate();
         this.endDate = event.getEndDate();

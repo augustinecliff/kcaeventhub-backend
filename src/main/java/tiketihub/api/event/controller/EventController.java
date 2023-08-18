@@ -1,15 +1,15 @@
 package tiketihub.api.event.controller;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import tiketihub.api.ApiResponse;
-import tiketihub.api.event.dto.AddUserAsHostDto;
-import tiketihub.api.event.dto.CreateEventDto;
-import tiketihub.api.event.dto.EditEventDto;
-import tiketihub.api.event.dto.EventDetailsDto;
+import tiketihub.api.event.dto.*;
 import tiketihub.api.event.model.Category;
 import tiketihub.api.event.model.Event;
 import tiketihub.api.event.model.EventParticipant;
@@ -17,6 +17,7 @@ import tiketihub.api.event.service.EventService;
 import tiketihub.authentication.dto.EmailDTO;
 
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -237,17 +238,16 @@ public class EventController {
     }
     @GetMapping("/events")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<ApiResponse<List<EventDetailsDto>>> browseEvents(@RequestHeader("Authorization")String authToken) {
+    public ResponseEntity<ApiResponse<BrowseEventsDto>> browseEvents(@RequestParam(name = "page", defaultValue = "0") int page,
+                                                                           @RequestParam(name = "size", defaultValue = "3") int size) {
         try {
-            authToken = authToken.replace("Bearer ", "");
-
-            List<EventDetailsDto> details = service.browseAllEvents();
+            BrowseEventsDto eventDetails = service.browseAllEvents(page,size);
 
             return ResponseEntity.status(HttpStatus.OK).body(
                     new ApiResponse<>(
                             HttpStatus.OK,
                             "All events fetched successfully!",
-                            details
+                            eventDetails
                     ));
         }
         catch (Exception e) {
@@ -262,7 +262,7 @@ public class EventController {
         }
 
     }
-    @PatchMapping("/guest/enroll/{eventId}")
+    @PatchMapping("/user/enroll/{eventId}")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ApiResponse<String>> enrollToEventAsUser(@PathVariable("eventId")UUID id,
                                                                        @RequestHeader("Authorization")String authToken) {
@@ -270,6 +270,32 @@ public class EventController {
             authToken = authToken.replace("Bearer ", "");
             log.info(String.valueOf(id));
             String addedUserEmail = service.selfEnrollUser(id,authToken);
+            return ResponseEntity.status(HttpStatus.OK).body(
+                    new ApiResponse<>(
+                            HttpStatus.OK,
+                            "New user with email: "+addedUserEmail+"been added successfully!",
+                            addedUserEmail
+                    ));
+        }
+        catch (Exception e) {
+            log.info(e.getMessage());
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(
+                    new ApiResponse<>(
+                            HttpStatus.CONFLICT,
+                            e.getMessage(),
+                            null
+                    ));
+        }
+    }
+    @PatchMapping("/user/un-enroll")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<ApiResponse<String>> unEnrollFromEventAsUser(@RequestParam("eventId")UUID eventId,
+                                                                     @RequestParam("participantId") UUID participantId,
+                                                                     @RequestHeader("Authorization")String authToken) {
+        try {
+            authToken = authToken.replace("Bearer ", "");
+            log.info(String.valueOf(eventId));
+            String addedUserEmail = service.unEnrollUser(eventId, participantId, authToken);
             return ResponseEntity.status(HttpStatus.OK).body(
                     new ApiResponse<>(
                             HttpStatus.OK,

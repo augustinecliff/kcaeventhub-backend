@@ -2,6 +2,9 @@ package tiketihub.api.event.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import tiketihub.api.event.dto.*;
@@ -22,11 +25,9 @@ import tiketihub.emailconfig.EmailConfig;
 import tiketihub.emailconfig.templates.EmailTemplates;
 import tiketihub.user.UserRepository;
 
-import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 @Service
 @Slf4j
@@ -228,17 +229,7 @@ public class EventService {
         return eventRepo.findById(eventId)
                 .map(event -> {
                     if(eventUserAccessLevel(event, token).contentEquals("HOST")) {
-                        if(participantRepo.existsById(participantId)) {
-                             for (EventParticipant participant : event.getParticipants()) {
-                                 if (String.valueOf(participant.getId()).contentEquals(participantId.toString())) {
-                                     event.getParticipants().remove(participant);
-                                     participantRepo.delete(participant);
-                                     break;
-                                 }
-                             }
-                            return String.valueOf(participantId);
-                        }
-                        else throw new ParticipantNotFoundException("No participant with the specified id exists");
+                        return deleteProcessor(participantId, event);
                     }
                     else throw new AccessDeniedException("Access to denied :Only Host can delete participants");
                 })
@@ -259,9 +250,46 @@ public class EventService {
         return viewEventDetails(eventId);
     }
 
-    public List<EventDetailsDto> browseAllEvents() {
-        return eventRepo.findAllByActive(true).stream()
+    public BrowseEventsDto browseAllEvents(int page, int size) {
+        Pageable paging = PageRequest.of(page, size);
+        Page<Event> eventPage = eventRepo.findByActive(true,paging);
+
+        BrowseEventsDto events = new BrowseEventsDto();
+
+        events.setEvents(eventPage.stream()
                 .map(EventDetailsDto::new)
-                .toList();
+                .toList());
+        events.setPageData(
+                Map.of("currentPage", eventPage.getNumber(),
+                        "totalEvents",eventPage.getTotalElements(),
+                        "totalPages",eventPage.getTotalPages())
+        );
+      return events;
+    }
+
+    public String unEnrollUser(UUID eventId, UUID participantId, String token) {
+        return eventRepo.findById(eventId)
+                .map(event -> {
+                    if(eventUserAccessLevel(event, token).contentEquals("CO-HOST") ||
+                            eventUserAccessLevel(event, token).contentEquals("GUEST")) {
+                       return deleteProcessor(participantId, event);
+                    }
+                    else throw new AccessDeniedException("Host cannot quit event");
+                })
+                .orElseThrow(() -> new ParticipantNotFoundException("No user with the specified id found!"));
+    }
+
+    private String deleteProcessor(UUID participantId, Event event) {
+        if(participantRepo.existsById(participantId)) {
+            for (EventParticipant participant : event.getParticipants()) {
+                if (String.valueOf(participant.getId()).contentEquals(participantId.toString())) {
+                    event.getParticipants().remove(participant);
+                    participantRepo.delete(participant);
+                    break;
+                }
+            }
+            return String.valueOf(participantId);
+        }
+        else throw new ParticipantNotFoundException("No participant with the specified id exists");
     }
 }

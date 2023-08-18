@@ -1,4 +1,4 @@
-package tiketihub.homepage;
+package tiketihub.api.home;
 
 public class HomeController {
 }

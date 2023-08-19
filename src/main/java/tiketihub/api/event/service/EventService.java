@@ -63,7 +63,7 @@ public class EventService {
                                         new CategoryNotFoundExeption("The category posted does not exist!")));
                 log.info(("point: 4"));
 
-                EventParticipantDto participant = new EventParticipantDto();
+                AddParticipantDto participant = new AddParticipantDto();
                 participant.setUser(
                         userRepo.findById(UUID.fromString(jwtUtil.getUserIdAndEmailFromToken(token).getUserId())).
                                 orElseThrow(() -> new UsernameNotFoundException("The user does not Exist!"))
@@ -78,7 +78,6 @@ public class EventService {
                 ));
                 log.info(("point: 7"));
                 newEvent.setActive(true);
-                ;
                 log.info(("point: 8"));
                 UUID id = eventRepo.save(newEvent).getId();
                 log.info("event id: "+id);
@@ -138,14 +137,14 @@ public class EventService {
                     if (eventUserAccessLevel(event, token).contentEquals("HOST")) {
                         boolean expected = false;
                         String email =  jwtUtil.getUserIdAndEmailFromToken(token).getEmail();
-                        if (isUserAnEventMember(event,
-                                jwtUtil.getUserIdAndEmailFromToken(token).getEmail()) == expected) {
+                        if (isUserAnEventMember(event, addUserDto.getUserEmail()) == expected) {
 
-                        if (isUserAnEventMember(event, email)) {
-                            throw new UserAlreadyExistsException(email+" is already a member of '"+event.getTitle()+"'");
+                        if (isUserAnEventMember(event, addUserDto.getUserEmail())) {
+                            throw new UserAlreadyExistsException(addUserDto.getUserEmail()
+                                    +" is already a member of '"+event.getTitle()+"'");
                         }
                         log.info(("point: 4"));
-                        EventParticipantDto participantDto = new EventParticipantDto();
+                        AddParticipantDto participantDto = new AddParticipantDto();
                         participantDto.setRole(addUserDto.getAccessLevel());
                         participantDto.setUser(userRepo.findByEmail(addUserDto.getUserEmail())
                                 .orElseThrow(() -> new UsernameNotFoundException(
@@ -174,7 +173,7 @@ public class EventService {
                     boolean expected = false;
                     if (isUserAnEventMember(event, email) == expected) {
                         log.info(("point: 3"));
-                        EventParticipantDto participantDto = new EventParticipantDto();
+                        AddParticipantDto participantDto = new AddParticipantDto();
                         participantDto.setRole("GUEST");
 
                         participantDto.setUser(userRepo.findByEmail(email)
@@ -213,12 +212,14 @@ public class EventService {
 
     }
 
-    public Set<EventParticipant> viewEventParticipants(UUID id, String token) {
+    public Set<EventParticipantDto> viewEventParticipants(UUID id, String token) {
         return eventRepo.findById(id)
                 .map(event -> {
                     if (eventUserAccessLevel(event, token).contentEquals("HOST") ||
                             eventUserAccessLevel(event, token).contentEquals("CO-HOST")) {
-                        return event.getParticipants();
+                        EventParticipantDto participants = new EventParticipantDto();
+
+                        return participants.getParticipantDtos(event);
                     }
                     else throw new AccessDeniedException("Access to denied :Only Host/Co-Host can see participant list");
                 })

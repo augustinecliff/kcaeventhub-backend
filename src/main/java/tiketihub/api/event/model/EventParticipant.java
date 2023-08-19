@@ -1,13 +1,15 @@
 package tiketihub.api.event.model;
 
 import jakarta.persistence.*;
-import lombok.Data;
-import tiketihub.api.event.dto.EventParticipantDto;
+import lombok.Getter;
+import lombok.Setter;
+import tiketihub.api.event.dto.AddParticipantDto;
 import tiketihub.user.User;
 
 import java.util.UUID;
 
-@Data
+@Getter
+@Setter
 @Entity
 public class EventParticipant {
     @Id
@@ -20,7 +22,7 @@ public class EventParticipant {
     private User user;
 
 
-    public static EventParticipant addParticipant(EventParticipantDto participantDto) {
+    public static EventParticipant addParticipant(AddParticipantDto participantDto) {
         EventParticipant participant = new EventParticipant();
         participant.setRole(participantDto.getRole());
         participant.setUser(participantDto.getUser());

@@ -136,7 +136,7 @@ public class EventController {
             return ResponseEntity.status(HttpStatus.OK).body(
                     new ApiResponse<>(
                             HttpStatus.OK,
-                                    "New user with email: "+addUser.getUserEmail()+"been added successfully!",
+                                    "New user with email: "+addUser.getUserEmail()+" has been added successfully!",
                             addUser
                     ));
         }
@@ -152,12 +152,12 @@ public class EventController {
     }
     @GetMapping("/host/viewparticipants/{eventId}")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<ApiResponse<Set<EventParticipant>>> participantsToEvent(@PathVariable("eventId")UUID id,
+    public ResponseEntity<ApiResponse<Set<EventParticipantDto>>> participantsToEvent(@PathVariable("eventId")UUID id,
                                                                                   @RequestHeader("Authorization")String authToken) {
         try {
             authToken = authToken.replace("Bearer ", "");
             log.info(String.valueOf(id));
-            Set<EventParticipant> participants = service.viewEventParticipants(id, authToken);
+            Set<EventParticipantDto> participants = service.viewEventParticipants(id, authToken);
             return ResponseEntity.status(HttpStatus.OK).body(
                     new ApiResponse<>(
                             HttpStatus.OK,

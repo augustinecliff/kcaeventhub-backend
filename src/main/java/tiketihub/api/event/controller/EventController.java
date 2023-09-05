@@ -7,9 +7,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import tiketihub.api.ApiResponse;
 import tiketihub.api.event.dto.*;
+import tiketihub.api.event.model.Attendee;
 import tiketihub.api.event.model.Category;
 import tiketihub.api.event.model.Event;
-import tiketihub.api.event.model.EventParticipant;
 import tiketihub.api.event.service.EventService;
 
 
@@ -178,17 +178,17 @@ public class EventController {
 
     @DeleteMapping("/host/remove-participant")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<ApiResponse<Set<EventParticipant>>> removeParticipantAsHost(@RequestParam("eventId")UUID eventId,
-                                                                                  @RequestParam("participantId") UUID participantId,
-                                                                                  @RequestHeader("Authorization")String authToken) {
+    public ResponseEntity<ApiResponse<Set<Attendee>>> removeParticipantAsHost(@RequestParam("eventId")UUID eventId,
+                                                                              @RequestParam("participantId") UUID participantId,
+                                                                              @RequestHeader("Authorization")String authToken) {
         try {
             authToken = authToken.replace("Bearer ", "");
 
-            String participant = service.deleteParticipant(eventId, participantId, authToken);
+            String attendee = service.deleteParticipant(eventId, participantId, authToken);
                                     return ResponseEntity.status(HttpStatus.OK).body(
                     new ApiResponse<>(
                             HttpStatus.OK,
-                            "Participant "+participant+"has been removed successfully successfully!",
+                            "Participant "+ attendee +" has been removed successfully successfully!",
                             null
                     ));
         }
@@ -230,7 +230,7 @@ public class EventController {
                     ));
         }
     }
-    @GetMapping("/events")
+    @GetMapping("/browse")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ApiResponse<BrowseEventsDto>> browseEvents(@RequestParam(name = "page", defaultValue = "0") int page,
                                                                            @RequestParam(name = "size", defaultValue = "3") int size) {
@@ -267,7 +267,7 @@ public class EventController {
             return ResponseEntity.status(HttpStatus.OK).body(
                     new ApiResponse<>(
                             HttpStatus.OK,
-                            "New user with email: "+addedUserEmail+"been added successfully!",
+                            "New attendee with email: "+addedUserEmail+" has enrolled successfully!",
                             addedUserEmail
                     ));
         }
@@ -293,7 +293,7 @@ public class EventController {
             return ResponseEntity.status(HttpStatus.OK).body(
                     new ApiResponse<>(
                             HttpStatus.OK,
-                            "New user with email: "+addedUserEmail+"been added successfully!",
+                            "New user with email: "+addedUserEmail+" has been added successfully!",
                             addedUserEmail
                     ));
         }

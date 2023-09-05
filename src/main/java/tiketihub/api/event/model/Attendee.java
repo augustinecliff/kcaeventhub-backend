@@ -8,24 +8,22 @@ import tiketihub.user.User;
 
 import java.util.UUID;
 
+@Entity
 @Getter
 @Setter
-@Entity
-public class EventParticipant {
+public class Attendee {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
-
-    private String role;
-
+    UUID id;
     @ManyToOne(targetEntity = User.class)
     private User user;
+    private String role;
 
-
-    public static EventParticipant addParticipant(AddParticipantDto participantDto) {
-        EventParticipant participant = new EventParticipant();
+    public static Attendee addAttendee(AddParticipantDto participantDto) {
+        Attendee participant = new Attendee();
         participant.setRole(participantDto.getRole());
         participant.setUser(participantDto.getUser());
         return participant;
     }
+
 }

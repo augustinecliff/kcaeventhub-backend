@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
+import tiketihub.authentication.security.OneTimePassword.dto.OneTimePasswordDTO;
 import tiketihub.authentication.security.dto.JwtDTO;
 import tiketihub.user.UserSession;
 
@@ -71,6 +72,26 @@ public class JWTUtil {
                 .setExpiration(exprationDate)
                 .signWith(jwtKey(),SignatureAlgorithm.HS256)
                 .compact();
+    }
+    public String convertOTPtoToken(OneTimePasswordDTO oneTimePasswordDTO) {
+        claims = new HashMap<>();
+        claims.put("userId", String.valueOf(oneTimePasswordDTO.getUserId()));
+        claims.put("OTPCode", String.valueOf(oneTimePasswordDTO.getCode()));
+
+        return Jwts.builder()
+                .setClaims(claims)
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(new Date().getTime() + 180000))
+                .signWith(jwtKey(), SignatureAlgorithm.HS256)
+                .compact();
+    }
+    public OneTimePasswordDTO getOTP(String OTPToken) {
+        claims = Jwts.parserBuilder()
+                .setSigningKey(jwtKey())
+                .build().parseClaimsJws(OTPToken).getBody();
+
+        return new OneTimePasswordDTO(UUID.fromString(claims.get("userId").toString()),
+                Integer.parseInt(claims.get("OTPCode").toString()));
     }
 
     public boolean validateToken(String token) {

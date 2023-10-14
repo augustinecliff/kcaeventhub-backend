@@ -59,6 +59,9 @@ public class JWTSecurityConfig {
                 .authorizeHttpRequests(auth ->
                         auth.requestMatchers("/auth/**").permitAll()
                                 .requestMatchers("/api/event/**").permitAll()
+                                .requestMatchers("/api-docs/**").permitAll()
+                                .requestMatchers("/swagger-ui-custom.html").permitAll()
+                                .requestMatchers("/swagger-ui/**").permitAll()
                                 .anyRequest().authenticated()
 
                 )

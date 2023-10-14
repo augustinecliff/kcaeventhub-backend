@@ -1,15 +1,15 @@
 package tiketihub.authentication.security.dto;
 
 import lombok.Getter;
-
-import java.util.UUID;
+import lombok.Setter;
 
 @Getter
+@Setter
 public class JwtDTO {
     public JwtDTO(String userId, String email) {
         this.userId = userId;
         this.email = email;
     }
-    private final String userId;
+    private String userId;
     private final String email;
 }

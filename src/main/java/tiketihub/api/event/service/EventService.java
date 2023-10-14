@@ -7,27 +7,30 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 import tiketihub.api.event.dto.*;
-import tiketihub.api.event.exceptions.AccessDeniedException;
-import tiketihub.api.event.exceptions.CategoryNotFoundExeption;
-import tiketihub.api.event.exceptions.EventNotFoundException;
-import tiketihub.api.event.exceptions.ParticipantNotFoundException;
+import tiketihub.api.event.exceptions.*;
+import tiketihub.api.event.model.Attendee;
 import tiketihub.api.event.model.Category;
 import tiketihub.api.event.model.Event;
-import tiketihub.api.event.model.EventParticipant;
+import tiketihub.api.event.model.Organizer;
+import tiketihub.api.event.repository.AttendeeRepository;
 import tiketihub.api.event.repository.CategoryRepository;
-import tiketihub.api.event.repository.EventParticipantRepository;
 import tiketihub.api.event.repository.EventRepository;
+import tiketihub.api.event.repository.OrganizerRepository;
 import tiketihub.authentication.exceptions.InvalidTokenException;
 import tiketihub.authentication.exceptions.UserAlreadyExistsException;
 import tiketihub.authentication.security.jwt.JWTUtil;
 import tiketihub.emailconfig.EmailConfig;
 import tiketihub.emailconfig.templates.EmailTemplates;
+import tiketihub.user.User;
 import tiketihub.user.UserRepository;
 
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -38,7 +41,9 @@ public class EventService {
     @Autowired
     private EventRepository eventRepo;
     @Autowired
-    private EventParticipantRepository participantRepo;
+    private OrganizerRepository organizerRepo;
+    @Autowired
+    private AttendeeRepository attendeeRepo;
     @Autowired
     private UserRepository userRepo;
     @Autowired
@@ -52,46 +57,40 @@ public class EventService {
     public Event createNewEvent(CreateEventDto eventDto, String authToken) {
         log.info(("point: 1"));
         try {
-                log.info(("point: 2"));
-                String token = authToken.replace("Bearer ", "");
+            log.info(("point: 2"));
+            String token = authToken.replace("Bearer ", "");
 
-                Event newEvent = Event.buildEvent(eventDto);
-                log.info(("point: 3"));
-                newEvent.setCategory(
-                        categoryRepo.findById(eventDto.getCategory().getId()).
-                                orElseThrow(() ->
-                                        new CategoryNotFoundExeption("The category posted does not exist!")));
-                log.info(("point: 4"));
+            Event newEvent = Event.buildEvent(eventDto);
+            log.info(("point: 3"));
+            newEvent.setCategory(
+                    categoryRepo.findById(eventDto.getCategory().getId()).
+                            orElseThrow(() ->
+                                    new CategoryNotFoundExeption("The category posted does not exist!")));
+            log.info(("point: 4.0"));
+            AddParticipantDto participant = new AddParticipantDto();
+            User user = userRepo.findById(UUID.fromString(jwtUtil.getUserIdAndEmailFromToken(token).getUserId())).
+                    orElseThrow(() -> new UsernameNotFoundException("The user does not Exist!"));
+            participant.setUser(user);
+            log.info(("point: 5.0"));
+            Organizer organizer = createOrSetOrganizer(user, participant);
+            log.info(("point: 5.1"));
+            newEvent.setOrganizer(organizer);
+            log.info(("point: 6"));
+            newEvent.setActive(true);
+            log.info(("point: 7"));
+            UUID id = eventRepo.save(newEvent).getId();
+            log.info("event id: "+id);
+            log.info(("point: 8"));
+            EmailTemplates template = new EmailTemplates();
+            log.info(("point: 9"));
+            sendEmail.sendMailWithAttachment(
+                    jwtUtil.getUserIdAndEmailFromToken(token).getEmail(),
+                    "New event creation",
+                    template.getNewEvent()
+            );
+            log.info(("point: 10"));
 
-                AddParticipantDto participant = new AddParticipantDto();
-                participant.setUser(
-                        userRepo.findById(UUID.fromString(jwtUtil.getUserIdAndEmailFromToken(token).getUserId())).
-                                orElseThrow(() -> new UsernameNotFoundException("The user does not Exist!"))
-                );
-                log.info(("point: 5"));
-
-                participant.setRole("HOST");
-                EventParticipant hostParticipant =  participantRepo.save(EventParticipant.addParticipant(participant));
-                log.info(("point: 6"));
-                newEvent.setParticipants(Set.of(
-                        hostParticipant
-                ));
-                log.info(("point: 7"));
-                newEvent.setActive(true);
-                log.info(("point: 8"));
-                UUID id = eventRepo.save(newEvent).getId();
-                log.info("event id: "+id);
-                 log.info(("point: 9"));
-                EmailTemplates template = new EmailTemplates();
-                log.info(("point: 10"));
-                sendEmail.sendMailWithAttachment(
-                        jwtUtil.getUserIdAndEmailFromToken(token).getEmail(),
-                        "New event creation",
-                        template.getNewEvent()
-                );
-                log.info(("point: 10"));
-
-                return newEvent;
+            return newEvent;
         }
         catch (Exception e) {
             throw new RuntimeException(e.getMessage());
@@ -145,14 +144,15 @@ public class EventService {
                         }
                         log.info(("point: 4"));
                         AddParticipantDto participantDto = new AddParticipantDto();
-                        participantDto.setRole(addUserDto.getAccessLevel());
-                        participantDto.setUser(userRepo.findByEmail(addUserDto.getUserEmail())
+                        User user  = userRepo.findByEmail(addUserDto.getUserEmail())
                                 .orElseThrow(() -> new UsernameNotFoundException(
-                                        "The user with email "+addUserDto.getUserEmail()+" does not exist!")));
+                                        "A user with the email "+addUserDto.getUserEmail()+" does not exist!"));
+                        participantDto.setRole(addUserDto.getAccessLevel());
+                        participantDto.setUser(user);
                         log.info(("point: 5"));
-                        EventParticipant participant = participantRepo.save(EventParticipant.addParticipant(participantDto));
+                        Attendee attendee = createOrSetAttendee(user, participantDto);
                         log.info(("point: 6"));
-                        event.getParticipants().add(participant);
+                        event.getAttendees().add(attendee);
                         log.info(("point: 7"));
                         eventRepo.save(event);
                         log.info(("point: 8"));
@@ -174,13 +174,14 @@ public class EventService {
                     if (isUserAnEventMember(event, email) == expected) {
                         log.info(("point: 3"));
                         AddParticipantDto participantDto = new AddParticipantDto();
-                        participantDto.setRole("GUEST");
-
-                        participantDto.setUser(userRepo.findByEmail(email)
+                        User user = userRepo.findByEmail(email)
                                 .orElseThrow(() -> new UsernameNotFoundException(
-                                        "The user with email "+email+" does not exist!")));
+                                        "The user with email "+email+" does not exist!"));
+                        participantDto.setRole("GUEST");
+                        participantDto.setUser(user);
                         log.info(("point: 4"));
-                        event.getParticipants().add(participantRepo.save(EventParticipant.addParticipant(participantDto)));
+                        Attendee attendee = createOrSetAttendee(user, participantDto);
+                        event.getAttendees().add(attendeeRepo.save(attendee));
                         log.info(("point: 5"));
                         eventRepo.save(event);
                         log.info(("point: 6"));
@@ -199,18 +200,20 @@ public class EventService {
                 .contentEquals(jwtUtil.getUserIdAndEmailFromToken(token).getUserId())) {
             return "CO-HOST";
         }
-        else if (String.valueOf(EventDetailsDto.hostUser(event).getUserId())
+        else if (String.valueOf(EventDetailsDto.guestUser(event).getUserId())
                 .contentEquals(jwtUtil.getUserIdAndEmailFromToken(token).getUserId())) {
             return "GUEST";
         }
         return "";
     }
     private boolean isUserAnEventMember(Event existingEvent, String email) {
+        if (existingEvent.getAttendees().stream().anyMatch(event -> event.getUser().getEmail().equals(email))) {
+            return true;
+        }
 
-        return existingEvent.getParticipants().stream()
-                .anyMatch(event -> event.getUser().getEmail().contentEquals(email));
-
+        else return existingEvent.getOrganizer().getUser().getEmail().equals(email);
     }
+
 
     public Set<EventParticipantDto> viewEventParticipants(UUID id, String token) {
         return eventRepo.findById(id)
@@ -280,17 +283,67 @@ public class EventService {
                 .orElseThrow(() -> new ParticipantNotFoundException("No user with the specified id found!"));
     }
 
-    private String deleteProcessor(UUID participantId, Event event) {
-        if(participantRepo.existsById(participantId)) {
-            for (EventParticipant participant : event.getParticipants()) {
-                if (String.valueOf(participant.getId()).contentEquals(participantId.toString())) {
-                    event.getParticipants().remove(participant);
-                    participantRepo.delete(participant);
+    private String deleteProcessor(UUID attendeeId, Event event) {
+        if(attendeeRepo.existsById(attendeeId)) {
+            for (Attendee attendee : event.getAttendees()) {
+                if (String.valueOf(attendee.getId()).contentEquals(attendeeId.toString())) {
+                    event.getAttendees().remove(attendee);
+                    attendeeRepo.delete(attendee);
                     break;
                 }
             }
-            return String.valueOf(participantId);
+            return String.valueOf(attendeeId);
         }
         else throw new ParticipantNotFoundException("No participant with the specified id exists");
+    }
+
+    private Organizer createOrSetOrganizer(User user, AddParticipantDto participant) {
+        if (organizerRepo.findByUser(user).isPresent()) {
+            return organizerRepo.findByUser(user).get();
+        }
+        else {
+            return organizerRepo.save(Organizer.addOrganizer(participant));
+        }
+    }
+    private Attendee createOrSetAttendee(User user, AddParticipantDto participant) {
+        if (attendeeRepo.findByUser(user).isPresent()) {
+            return attendeeRepo.findByUser(user).get();
+        }
+        else {
+            return attendeeRepo.save(Attendee.addAttendee(participant));
+        }
+    }
+
+    public Set<EventDetailsDto> getEventsOrganizedBy(UUID organizerId) {
+        log.info("Is this processed (getEventsOrganizedBy) ?");
+        return eventRepo.findEventsByActiveAndOrganizer(true,
+                organizerRepo.findById(organizerId).
+                        orElseThrow(() -> new OrganizerNotFoundException("The organizer "+ organizerId +" does not exist")))
+                .stream().map(EventDetailsDto::new).collect(Collectors.toSet());
+    }
+
+    public Set<EventDetailsDto> getUpcomingEventsForUser(String token) {
+        if(jwtUtil.validateToken(token)) {
+            UUID userId = UUID.fromString(jwtUtil.getUserIdAndEmailFromToken(token).getUserId());
+
+            User user = userRepo.findById(userId)
+                    .orElseThrow(() -> new UsernameNotFoundException("The user "+userId+" does not exist!"));
+
+            Set<EventDetailsDto> upcomingEvents = new HashSet<>();
+            attendeeRepo.findByUser(user).ifPresent(
+                    attendee -> upcomingEvents.addAll(
+                            attendee.getEvents()
+                                    .stream().map(EventDetailsDto::new)
+                                    .collect(Collectors.toSet()))
+            );
+            organizerRepo.findByUser(user).ifPresent(
+                    organizer -> upcomingEvents.addAll(
+                            organizer.getEvents()
+                                    .stream().map(EventDetailsDto::new)
+                                    .collect(Collectors.toSet()))
+            );
+            return upcomingEvents;
+        }
+        else throw new InvalidTokenException("Invalid token");
     }
 }

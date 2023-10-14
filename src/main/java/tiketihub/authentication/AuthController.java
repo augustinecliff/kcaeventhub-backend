@@ -13,6 +13,8 @@ import tiketihub.authentication.exceptions.InvalidEmailException;
 import tiketihub.authentication.exceptions.InvalidUserCredentialException;
 import tiketihub.authentication.exceptions.UserAlreadyExistsException;
 import tiketihub.authentication.response.AuthResponse;
+import tiketihub.authentication.security.OneTimePassword.dto.CodeDTO;
+import tiketihub.authentication.security.OneTimePassword.service.OneTimePasswordService;
 import tiketihub.authentication.security.jwt.JWTUtil;
 import tiketihub.user.UserDTO;
 
@@ -24,6 +26,8 @@ public class AuthController {
     private final AuthService authService;
     @Autowired
     private JWTUtil jwtUtil;
+    @Autowired
+    private OneTimePasswordService OTPService;
     private TokenDTO tokenDTO;
 
 
@@ -101,14 +105,12 @@ public class AuthController {
     @PostMapping("/forgot-password")
     public ResponseEntity<AuthResponse<TokenDTO>> forgotPassword(@RequestBody EmailDTO emailDTO) {
         try {
-
-            String resetToken = authService.validateEmailAndGenerateResetPasswordToken(emailDTO);
             tokenDTO = new TokenDTO();
-            tokenDTO.setToken(resetToken);
-            tokenDTO.setPurpose("Password reset token");
+            tokenDTO.setPurpose("Password configuration token");
+            tokenDTO.setToken(OTPService.validateEmailAndGenerateOTP(emailDTO));
             AuthResponse<TokenDTO> response = new AuthResponse<>(
                     HttpStatus.CREATED,
-                    "A password reset token has been sent to " + emailDTO.getEmail(),
+                    "A password reset otp has been sent to " + emailDTO.getEmail(),
                     tokenDTO
             );
             log.info(tokenDTO.toString());
@@ -122,23 +124,42 @@ public class AuthController {
             log.info(tokenDTO.toString());
 
             AuthResponse<TokenDTO> response = new AuthResponse<>(
-                    HttpStatus.CREATED,
-                    "A password reset token has been sent to " + emailDTO.getEmail(),
+                    HttpStatus.CONFLICT,
+                    exc.getMessage(),
+                    null
+            );
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+        }
+    }
+    @PostMapping("/validate-otp")
+    public ResponseEntity<AuthResponse<TokenDTO>> validateOtpAndReturnToken(@RequestBody CodeDTO code,
+                                                                            @RequestParam("OTPtoken") String OTPtoken) {
+        try {
+            tokenDTO = new TokenDTO();
+            tokenDTO.setPurpose("Password configuration token");
+            tokenDTO.setToken(OTPService.validateOTPAndGenerateToken(code, OTPtoken));
+            AuthResponse<TokenDTO> response = new AuthResponse<>(
+                    HttpStatus.ACCEPTED,
+                    "Otp is valid",
                     tokenDTO
             );
-            return ResponseEntity.status(HttpStatus.OK).body(response);
+            return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
+        }
+        catch (Exception exc) {
+            AuthResponse<TokenDTO> response = new AuthResponse<>(
+                    HttpStatus.CONFLICT,
+                    exc.getMessage(),
+                    null
+            );
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
         }
     }
 
     @PatchMapping("/set-password")
     public ResponseEntity<AuthResponse<TokenDTO>> setPassword(@RequestBody PasswardDTO passwardDTO,
-                                                    @RequestParam("token") String token){
+                                                    @RequestParam("token") String token){ // //TODO : Access 4 digit otp
         try {
             authService.validateAndSet(passwardDTO, token);
-            tokenDTO = new TokenDTO();
-            tokenDTO.setToken(token);
-            tokenDTO.setPurpose("Set password");
-            log.info(tokenDTO.toString());
             AuthResponse<TokenDTO> response = new AuthResponse<>(
                     HttpStatus.ACCEPTED,
                     "User credentials have been updated successfully",
@@ -147,10 +168,6 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
         }
         catch (Exception exc) {
-            tokenDTO = new TokenDTO();
-            tokenDTO.setToken("");
-            tokenDTO.setPurpose("Set password");
-            log.info(tokenDTO.toString());
             AuthResponse<TokenDTO> response = new AuthResponse<>(
                     HttpStatus.CONFLICT,
                     exc.getMessage(),
@@ -164,27 +181,22 @@ public class AuthController {
     public ResponseEntity<AuthResponse<TokenDTO>> processRegistration(@RequestBody UserDTO user){
 
         try {
-            String setPasswordToken = authService.validateUserAndGenerateSetPasswordToken(user);
             tokenDTO = new TokenDTO();
-            tokenDTO.setToken(setPasswordToken);
-            tokenDTO.setPurpose("Password configuration token");
-            log.info(tokenDTO.toString());
+            tokenDTO.setPurpose("OTP token");
+            tokenDTO.setToken(OTPService.validateUserAndGenerateSetPasswordToken(user));
             AuthResponse<TokenDTO> response = new AuthResponse<>(
                     HttpStatus.ACCEPTED,
-                    "A password configuration token has been sent to " + user.getEmail(),
+                    "A one-time-token has been sent to " + user.getEmail(),
                     tokenDTO
             );
             return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
         }
         catch(UserAlreadyExistsException exc) {
-            tokenDTO = new TokenDTO();
-            tokenDTO.setToken("");
-            tokenDTO.setPurpose("Password configuration token");
             log.info(tokenDTO.toString());
             AuthResponse<TokenDTO> response = new AuthResponse<>(
                     HttpStatus.CONFLICT,
                     exc.getMessage(),
-                    tokenDTO
+                    null
             );
             return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
         }

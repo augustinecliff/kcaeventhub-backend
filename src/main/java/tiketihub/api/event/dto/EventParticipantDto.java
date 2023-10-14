@@ -1,8 +1,8 @@
 package tiketihub.api.event.dto;
 
 import lombok.Data;
+import tiketihub.api.event.model.Attendee;
 import tiketihub.api.event.model.Event;
-import tiketihub.api.event.model.EventParticipant;
 import tiketihub.user.User;
 
 import java.util.HashSet;
@@ -27,11 +27,11 @@ public class EventParticipantDto {
     public Set<EventParticipantDto> getParticipantDtos(Event event) {
         Set<EventParticipantDto> participantDtos = new HashSet<>();
 
-        for (EventParticipant participant : event.getParticipants()) {
+        for (Attendee attendee : event.getAttendees()) {
             EventParticipantDto participantDto = new EventParticipantDto();
-            participantDto.setParticipantId(participant.getId());
-            participantDto.setParticipantRole(participant.getRole());
-            participantDto.setParticipantData(setUser(participant.getUser()));
+            participantDto.setParticipantId(attendee.getId());
+            participantDto.setParticipantRole(attendee.getRole());
+            participantDto.setParticipantData(setUser(attendee.getUser()));
             participantDtos.add(participantDto);
         }
 

@@ -9,6 +9,7 @@ import tiketihub.api.event.dto.CreateEventDto;
 import tiketihub.api.event.dto.EditEventDto;
 
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
@@ -42,12 +43,14 @@ public class Event {
 
     @ManyToOne(targetEntity = Category.class)
     private Category category;
-
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(name = "Event_Participants",
+    @ManyToMany
+    @JoinTable(name = "Event_Attendees",
             joinColumns = @JoinColumn(name = "event_id"),
-            inverseJoinColumns = @JoinColumn(name = "participant_id"))
-    private Set<EventParticipant> participants;
+            inverseJoinColumns = @JoinColumn(name = "attendee_id"))
+    private Set<Attendee> attendees = new HashSet<>();
+
+    @ManyToOne(targetEntity = Organizer.class)
+    private Organizer organizer;
 
     public Event(String title, LocalDate startDate,
                  LocalDate endDate, Long duration,

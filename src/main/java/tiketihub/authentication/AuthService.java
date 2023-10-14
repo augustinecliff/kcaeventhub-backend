@@ -8,20 +8,16 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import tiketihub.authentication.dto.EmailDTO;
 import tiketihub.authentication.dto.LoginDTO;
 import tiketihub.authentication.dto.PasswardDTO;
-import tiketihub.authentication.exceptions.*;
-import tiketihub.authentication.security.dto.JwtDTO;
-import tiketihub.emailconfig.EmailConfig;
+import tiketihub.authentication.exceptions.InvalidPasswordException;
+import tiketihub.authentication.exceptions.InvalidTokenException;
+import tiketihub.authentication.exceptions.InvalidUserCredentialException;
+import tiketihub.authentication.exceptions.PasswordMismatchException;
 import tiketihub.authentication.security.jwt.JWTUtil;
+import tiketihub.emailconfig.EmailConfig;
 import tiketihub.emailconfig.templates.EmailTemplates;
-import tiketihub.user.User;
-import tiketihub.user.UserDTO;
 import tiketihub.user.UserRepository;
-
-import java.util.Date;
-import java.util.UUID;
 
 @Service
 @Slf4j
@@ -33,9 +29,9 @@ public class AuthService {
     @Autowired
     private JWTUtil jwtUtil;
     @Autowired
-    private  AuthenticationManager authManager;
-    @Autowired
     private PasswordEncoder passwordEncoder;
+    @Autowired
+    private  AuthenticationManager authManager;
 
     public void processLogout(String authToken) {
         authToken = authToken.replace("Bearer ","");
@@ -54,11 +50,10 @@ public class AuthService {
     }
 
 
-    public String validateUserAndGenerateSetPasswordToken(UserDTO user) {
+    /*public String validateUserAndGenerateSetPasswordToken(UserDTO user) {
        if (!(userRepo.existsByEmail(user.getEmail()))) {
            User currentUser = User.buildUser(user);
            userRepo.save(currentUser);
-
 
            //TODO :  Send email through 'message broker' ... (for setting the password)
            String token = jwtUtil.generatePasswordConfigToken(
@@ -73,9 +68,9 @@ public class AuthService {
        } else {
            throw new UserAlreadyExistsException("A user with the same email already exists");
        }
-    }
+    }*/
 
-    public void validateAndSet(PasswardDTO passwardDTO,String token) {
+    public void validateAndSet(PasswardDTO passwardDTO,String token) { // to be removed
         if (jwtUtil.validateToken(token)) {
             log.info("\npassword: " + passwardDTO.getPassword()+
                     "\nconfirmPassword: "+ passwardDTO.getConfirmPassword());
@@ -103,7 +98,7 @@ public class AuthService {
         else throw new InvalidTokenException("The token used is invalid");
     }
 
-    public String validateEmailAndGenerateResetPasswordToken(EmailDTO emailDTO) {
+   /* public String validateEmailAndGenerateResetPasswordToken(EmailDTO emailDTO) { // To be removed.
         if (userRepo.existsByEmail(emailDTO.getEmail())) {
             String token = jwtUtil.
                     generatePasswordConfigToken(
@@ -117,5 +112,5 @@ public class AuthService {
             return token;
         }
         else throw new InvalidEmailException("The email you entered does not exist");
-    }
+    }*/
 }

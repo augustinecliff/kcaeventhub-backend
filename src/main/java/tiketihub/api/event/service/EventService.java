@@ -7,11 +7,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 import tiketihub.api.event.dto.*;
-import tiketihub.api.event.exceptions.AccessDeniedException;
-import tiketihub.api.event.exceptions.CategoryNotFoundExeption;
-import tiketihub.api.event.exceptions.EventNotFoundException;
-import tiketihub.api.event.exceptions.ParticipantNotFoundException;
+import tiketihub.api.event.exceptions.*;
 import tiketihub.api.event.model.Attendee;
 import tiketihub.api.event.model.Category;
 import tiketihub.api.event.model.Event;
@@ -28,9 +26,11 @@ import tiketihub.emailconfig.templates.EmailTemplates;
 import tiketihub.user.User;
 import tiketihub.user.UserRepository;
 
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -207,11 +207,13 @@ public class EventService {
         return "";
     }
     private boolean isUserAnEventMember(Event existingEvent, String email) {
+        if (existingEvent.getAttendees().stream().anyMatch(event -> event.getUser().getEmail().equals(email))) {
+            return true;
+        }
 
-        return existingEvent.getAttendees().stream()
-                .anyMatch(event -> event.getUser().getEmail().contentEquals(email));
-
+        else return existingEvent.getOrganizer().getUser().getEmail().equals(email);
     }
+
 
     public Set<EventParticipantDto> viewEventParticipants(UUID id, String token) {
         return eventRepo.findById(id)
@@ -310,5 +312,38 @@ public class EventService {
         else {
             return attendeeRepo.save(Attendee.addAttendee(participant));
         }
+    }
+
+    public Set<EventDetailsDto> getEventsOrganizedBy(UUID organizerId) {
+        log.info("Is this processed (getEventsOrganizedBy) ?");
+        return eventRepo.findEventsByActiveAndOrganizer(true,
+                organizerRepo.findById(organizerId).
+                        orElseThrow(() -> new OrganizerNotFoundException("The organizer "+ organizerId +" does not exist")))
+                .stream().map(EventDetailsDto::new).collect(Collectors.toSet());
+    }
+
+    public Set<EventDetailsDto> getUpcomingEventsForUser(String token) {
+        if(jwtUtil.validateToken(token)) {
+            UUID userId = UUID.fromString(jwtUtil.getUserIdAndEmailFromToken(token).getUserId());
+
+            User user = userRepo.findById(userId)
+                    .orElseThrow(() -> new UsernameNotFoundException("The user "+userId+" does not exist!"));
+
+            Set<EventDetailsDto> upcomingEvents = new HashSet<>();
+            attendeeRepo.findByUser(user).ifPresent(
+                    attendee -> upcomingEvents.addAll(
+                            attendee.getEvents()
+                                    .stream().map(EventDetailsDto::new)
+                                    .collect(Collectors.toSet()))
+            );
+            organizerRepo.findByUser(user).ifPresent(
+                    organizer -> upcomingEvents.addAll(
+                            organizer.getEvents()
+                                    .stream().map(EventDetailsDto::new)
+                                    .collect(Collectors.toSet()))
+            );
+            return upcomingEvents;
+        }
+        else throw new InvalidTokenException("Invalid token");
     }
 }

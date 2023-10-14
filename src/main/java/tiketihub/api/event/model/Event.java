@@ -43,13 +43,6 @@ public class Event {
 
     @ManyToOne(targetEntity = Category.class)
     private Category category;
-
-    /*@ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(name = "Event_Participant",
-            joinColumns = @JoinColumn(name = "event_id"),
-            inverseJoinColumns = @JoinColumn(name = "participant_id"))
-    private Set<Participant> participants;*/
-
     @ManyToMany
     @JoinTable(name = "Event_Attendees",
             joinColumns = @JoinColumn(name = "event_id"),

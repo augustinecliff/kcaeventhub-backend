@@ -6,6 +6,7 @@ import lombok.Setter;
 import tiketihub.api.event.dto.AddParticipantDto;
 import tiketihub.user.User;
 
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -18,6 +19,10 @@ public class Organizer {
 
     @ManyToOne(targetEntity = User.class)
     private User user;
+
+    @OneToMany(mappedBy = "organizer")
+    Set<Event> events;
+
     public static Organizer addOrganizer(AddParticipantDto participantDto) {
         Organizer organizer = new Organizer();
         organizer.setUser(participantDto.getUser());

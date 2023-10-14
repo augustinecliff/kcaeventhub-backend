@@ -27,7 +27,6 @@ public class EventController {
     }
 
     @GetMapping("/categories")
-    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ApiResponse<Iterable<Category>>> eventCategories() {
         try {
 
@@ -231,7 +230,6 @@ public class EventController {
         }
     }
     @GetMapping("/browse")
-    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ApiResponse<BrowseEventsDto>> browseEvents(@RequestParam(name = "page", defaultValue = "0") int page,
                                                                            @RequestParam(name = "size", defaultValue = "3") int size) {
         try {
@@ -295,6 +293,50 @@ public class EventController {
                             HttpStatus.OK,
                             "New user with email: "+addedUserEmail+" has been added successfully!",
                             addedUserEmail
+                    ));
+        }
+        catch (Exception e) {
+            log.info(e.getMessage());
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(
+                    new ApiResponse<>(
+                            HttpStatus.CONFLICT,
+                            e.getMessage(),
+                            null
+                    ));
+        }
+    }
+    @GetMapping("/upcoming-events")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<ApiResponse<Set<EventDetailsDto>>> viewUpcomingEventForUser( @RequestHeader("Authorization")String authToken) {
+        try {
+            authToken = authToken.replace("Bearer ", "");
+            return ResponseEntity.status(HttpStatus.OK).body(
+                    new ApiResponse<>(
+                            HttpStatus.OK,
+                            "Upcoming events for current user fetched successfully!",
+                            service.getUpcomingEventsForUser(authToken)
+                    ));
+        }
+        catch (Exception e) {
+            log.info(e.getMessage());
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(
+                    new ApiResponse<>(
+                            HttpStatus.CONFLICT,
+                            e.getMessage(),
+                            null
+                    ));
+        }
+    }
+    @GetMapping("/by/{organizerId}")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<ApiResponse<Set<EventDetailsDto>>> viewOrganizerSpecificEvents(@PathVariable("organizerId")UUID organizerId) {
+        try {
+            log.info(String.valueOf(organizerId));
+            return ResponseEntity.status(HttpStatus.OK).body(
+                    new ApiResponse<>(
+                            HttpStatus.OK,
+                            "Events by organizer "+organizerId+" fetched successfully!",
+                            service.getEventsOrganizedBy(organizerId)
                     ));
         }
         catch (Exception e) {

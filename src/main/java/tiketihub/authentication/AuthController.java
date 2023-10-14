@@ -103,7 +103,7 @@ public class AuthController {
 
         }
     @PostMapping("/forgot-password")
-    public ResponseEntity<AuthResponse<TokenDTO>> forgotPassword(@RequestBody EmailDTO emailDTO) {//TODO : Access 4 digit otp
+    public ResponseEntity<AuthResponse<TokenDTO>> forgotPassword(@RequestBody EmailDTO emailDTO) {
         try {
             tokenDTO = new TokenDTO();
             tokenDTO.setPurpose("Password configuration token");
@@ -124,11 +124,11 @@ public class AuthController {
             log.info(tokenDTO.toString());
 
             AuthResponse<TokenDTO> response = new AuthResponse<>(
-                    HttpStatus.CREATED,
-                    "A password reset otp has been sent to " + emailDTO.getEmail(),
-                    tokenDTO
+                    HttpStatus.CONFLICT,
+                    exc.getMessage(),
+                    null
             );
-            return ResponseEntity.status(HttpStatus.OK).body(response);
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
         }
     }
     @PostMapping("/validate-otp")

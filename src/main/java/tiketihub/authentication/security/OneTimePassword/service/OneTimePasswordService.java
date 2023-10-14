@@ -34,7 +34,7 @@ public class OneTimePasswordService {
                 user.getId(),
                 new Random().nextInt(1000, 10_000)
         );
-        email.sendSimpleEmail(emailDTO.getEmail(), "Forgot password" , String.valueOf(code.getCode()));
+        email.sendSimpleEmail(emailDTO.getEmail(), "OTP-code to reset your password" , String.valueOf(code.getCode()));
 
         return jwt.convertOTPtoToken(code);
     }
@@ -48,6 +48,7 @@ public class OneTimePasswordService {
                         new Date(new Date().getTime()+180000)
                 );
             }
+            throw new InvalidTokenException("The otp provided is not valid.");
         }
         throw new InvalidTokenException("The token is invalid");
     }
@@ -61,7 +62,7 @@ public class OneTimePasswordService {
                     user.getId(),
                     new Random().nextInt(1000, 10_000)
             );
-            email.sendSimpleEmail(userDTO.getEmail(), "Forgot password" , String.valueOf(code.getCode()));
+            email.sendSimpleEmail(userDTO.getEmail(), "OTP-code to set your password" , String.valueOf(code.getCode()));
             return jwt.convertOTPtoToken(code);
 
         } else {

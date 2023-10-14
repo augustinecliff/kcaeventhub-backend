@@ -1,6 +1,7 @@
 package tiketihub.api.event.dto;
 
 import lombok.Data;
+import tiketihub.api.event.exceptions.AccessDeniedException;
 import tiketihub.api.event.exceptions.NoHostFoundException;
 import tiketihub.api.event.model.Attendee;
 import tiketihub.api.event.model.Event;
@@ -13,6 +14,7 @@ import java.util.UUID;
 @Data
 public class EventDetailsDto {
     private UUID eventId;
+    private UUID organizerId;
     private String title;
     private LocalDate startDate;
     private LocalDate endDate;
@@ -26,6 +28,7 @@ public class EventDetailsDto {
 
     public EventDetailsDto(Event event) {
         this.eventId = event.getId();
+        this.organizerId = event.getOrganizer().getId();
         this.title = event.getTitle();
         this.startDate = event.getStartDate();
         this.endDate = event.getEndDate();
@@ -58,7 +61,7 @@ public class EventDetailsDto {
                 return host;
             }
         }
-        throw new NoHostFoundException("No host found in this event!");
+        throw new NoHostFoundException("Only hosts/co-host can make changes to events");
     }
     public static EventUserAccessLevelDto guestUser(Event event) {
         for (Attendee attendee : event.getAttendees()) {
@@ -71,7 +74,7 @@ public class EventDetailsDto {
                 return host;
             }
         }
-        throw new NoHostFoundException("No host found in this event!");
+        throw new AccessDeniedException("Only hosts/co-host can make changes to events");
     }
 
 }

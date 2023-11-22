@@ -27,7 +27,8 @@ public class GptAuthenticationEntryPoint implements AuthenticationEntryPoint {
         String s = s = "Unauthorized";
 
         String token = request.getHeader("Authorization");
-        if (!token.isBlank()) {
+        if (token == null) token = "";
+        if (!token.isEmpty()) {
             if (jwt.validateToken(token.substring(7))) {
                 responseCode = HttpServletResponse.SC_FORBIDDEN;
                 s = "Forbidden access";

@@ -14,17 +14,20 @@ import java.util.UUID;
 @Data
 @NoArgsConstructor
 public class UserSession implements UserDetails {
-    public UserSession(String email, String password, String userRole, UUID userId) {
+    public UserSession(String email, String password, String userRole, UUID userId,String firstName, String lastName) {
         this.email = email;
         this.password = password;
         this.userRole = userRole;
         this.userId = userId;
+        this.firstName = firstName;
+        this.lastName = lastName;
     }
     private String email;
     private String password;
     private String userRole;
     private UUID userId;
-
+    private String firstName;
+    private String lastName;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

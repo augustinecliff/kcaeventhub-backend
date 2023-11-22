@@ -14,7 +14,7 @@ import java.util.UUID;
 
 @Entity
 @Data
-@Table(name = "User_Table" ,
+@Table(name = "User" ,
         uniqueConstraints = {@UniqueConstraint(columnNames = {"email"})})
 public class User implements Serializable {
     @Serial
@@ -22,7 +22,6 @@ public class User implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
-
     @NotNull
     private String firstName;
     @NotNull
@@ -31,6 +30,7 @@ public class User implements Serializable {
     @Email
     private String email;
     private String password;
+    private String phoneNumber;
     @NotNull
     @Past
     private LocalDate dateOfBirth;
@@ -46,22 +46,19 @@ public class User implements Serializable {
         user1.setFirstName(user.getFirstName());
         user1.setLastName(user.getLastName());
         user1.setEmail(user.getEmail());
+        user1.setPhoneNumber(user.getPhoneNumber());
         user1.setDateOfBirth(user.getDateOfBirth());
         user1.setGender(user.getGender());
-        user1.setAge(
-                Period.between(
-                        user.getDateOfBirth(),
-                        LocalDate.now()
-                ).getYears()
-        );
         user1.setUserRole("ROLE_USER");
         return user1;
     }
 
     public static UserDTO UserTouserDTOConverter(User user) {
         UserDTO userDTO = new UserDTO();
+        userDTO.setId(user.getId());
         userDTO.setGender(user.getGender());
         userDTO.setEmail(user.getEmail());
+        userDTO.setPhoneNumber(user.getPhoneNumber());
         userDTO.setFirstName(user.getFirstName());
         userDTO.setLastName(user.getLastName());
         userDTO.setDateOfBirth(user.getDateOfBirth());

@@ -2,6 +2,7 @@ package tiketihub.api.event.model;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import tiketihub.api.event.dto.CategoryDto;
@@ -37,6 +38,7 @@ public class Event {
     @NotNull
     private Long ageRestriction;
     @NotNull
+    @Column(length = 4000)
     private String description;
     @NotNull
     private boolean active;

@@ -41,6 +41,8 @@ public class JWTUtil {
         claims = new HashMap<>();
         claims.put("userId", userPrincipal.getUserId());
         claims.put("email", userPrincipal.getEmail());
+        claims.put("firstName", userPrincipal.getFirstName());
+        claims.put("lastName", userPrincipal.getLastName());
         return Jwts.builder()
                 .setClaims(claims)
                 .setIssuedAt(new Date())

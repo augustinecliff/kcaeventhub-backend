@@ -20,6 +20,7 @@ import tiketihub.user.UserDTO;
 
 @RestController
 @RequestMapping("/auth")
+@CrossOrigin(origins = "*")
 @Slf4j
 public class AuthController {
     @Autowired
@@ -165,7 +166,8 @@ public class AuthController {
                     "User credentials have been updated successfully",
                     null
             );
-            return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
+            LoginDTO login = new LoginDTO(jwtUtil.getUserIdAndEmailFromToken(token).getEmail(), passwardDTO.getPassword());
+            return login(login);
         }
         catch (Exception exc) {
             AuthResponse<TokenDTO> response = new AuthResponse<>(

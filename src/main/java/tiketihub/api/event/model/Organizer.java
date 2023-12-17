@@ -1,5 +1,6 @@
 package tiketihub.api.event.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -21,6 +22,7 @@ public class Organizer {
     private User user;
 
     @OneToMany(mappedBy = "organizer")
+    @JsonIgnore
     Set<Event> events;
 
     public static Organizer addOrganizer(AddParticipantDto participantDto) {

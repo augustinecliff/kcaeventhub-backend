@@ -74,34 +74,5 @@ public class JWTSecurityConfig {
 
         return httpSecurity.build();
     }
-    /*@Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
-        httpSecurity.csrf(AbstractHttpConfigurer::disable)
-                .exceptionHandling(handler -> {
-                    handler.authenticationEntryPoint(unauthorizedEntryPoint());
-                    handler.accessDeniedHandler((request, response, accessDeniedException) -> {
-                        response.sendError(HttpStatus.FORBIDDEN.value(), "Access denied");
-                        log.info(HttpStatus.FORBIDDEN.toString());
-                    });
-                })
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-
-                .authorizeHttpRequests(auth ->
-                        auth.requestMatchers("/auth/**").permitAll()
-                                .anyRequest().authenticated()
-
-                )
-
-                .authenticationProvider(daoAuthenticationProvider())
-                .addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
-
-        return httpSecurity.build();
-    }*/
-
-    /*@Bean
-    public AuthenticationEntryPoint unauthorizedEntryPoint() {
-        log.info(HttpStatus.UNAUTHORIZED.toString());
-        return (request, response, authException) -> response.sendError(HttpStatus.UNAUTHORIZED.value(), "Unauthorized");
-    }*/
 
 }

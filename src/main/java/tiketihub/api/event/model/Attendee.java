@@ -1,11 +1,14 @@
 package tiketihub.api.event.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import tiketihub.api.event.dto.AddParticipantDto;
 import tiketihub.user.User;
 
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -21,7 +24,8 @@ public class Attendee {
     private String role;
 
     @ManyToMany(mappedBy = "attendees")
-    private Set<Event> events;
+    @JsonIgnore
+    private List<Event> events;
 
     public static Attendee addAttendee(AddParticipantDto participantDto) {
         Attendee participant = new Attendee();

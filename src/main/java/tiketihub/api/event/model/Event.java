@@ -1,5 +1,6 @@
 package tiketihub.api.event.model;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -9,16 +10,18 @@ import tiketihub.api.event.dto.CategoryDto;
 import tiketihub.api.event.dto.CreateEventDto;
 import tiketihub.api.event.dto.EditEventDto;
 
+import java.io.Serial;
 import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 @Entity
 @Data
 @NoArgsConstructor
-@Table(uniqueConstraints = {@UniqueConstraint(columnNames = {("title")})})
+@Table(name = "event", uniqueConstraints = {@UniqueConstraint(columnNames = {("title")})})
 public class Event {
+    @Serial
+    private static final long serialVersionUID = 44432301L;
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
@@ -45,11 +48,11 @@ public class Event {
 
     @ManyToOne(targetEntity = Category.class)
     private Category category;
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinTable(name = "Event_Attendees",
             joinColumns = @JoinColumn(name = "event_id"),
             inverseJoinColumns = @JoinColumn(name = "attendee_id"))
-    private Set<Attendee> attendees = new HashSet<>();
+    private List<Attendee> attendees = new LinkedList<>();
 
     @ManyToOne(targetEntity = Organizer.class)
     private Organizer organizer;

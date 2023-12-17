@@ -1,6 +1,7 @@
 package tiketihub.api.event.controller;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -10,7 +11,11 @@ import tiketihub.api.event.dto.*;
 import tiketihub.api.event.model.Attendee;
 import tiketihub.api.event.model.Category;
 import tiketihub.api.event.model.Event;
+import tiketihub.api.event.repository.AttendeeRepository;
+import tiketihub.api.event.repository.EventRepository;
 import tiketihub.api.event.service.EventService;
+import tiketihub.user.User;
+import tiketihub.user.UserRepository;
 
 
 import java.util.List;
@@ -23,9 +28,23 @@ import java.util.UUID;
 @CrossOrigin( origins = "*")
 public class EventController {
     private final EventService service;
+    @Autowired
+    private AttendeeRepository attendeeRepo;
+    @Autowired
+    private EventRepository eventRepo;
 
+    @Autowired
     public EventController(EventService service) {
         this.service = service;
+    }
+
+    @GetMapping("/alldetails")
+    public ResponseEntity<Object> events() {
+        try {
+            return ResponseEntity.status(HttpStatus.OK).body(eventRepo.findById(UUID.fromString("02de4454-f057-42cc-b820-67bdb43d3c6b")));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+        }
     }
 
     @GetMapping("/categories")
@@ -73,13 +92,7 @@ public class EventController {
                     ));
         }
     }
-    @GetMapping("/AllDetails")
-    public ResponseEntity<List<Event>> allEvents() {
-
-        return ResponseEntity.status(HttpStatus.OK).body(service.allEvents());
-    }
     @GetMapping("/details")
-    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ApiResponse<EventDetailsDto>> eventDetails(@RequestParam("eventId")UUID id) {
         try {
             EventDetailsDto eventDetails = service.viewEventDetails(id);
@@ -130,40 +143,14 @@ public class EventController {
         }
     }*/
 
-    /*@PatchMapping("/host/adduser")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<ApiResponse<AddUserAsHostDto>> addUserAsHost(@RequestParam("eventId")UUID id,
-                                                                      @RequestBody AddUserAsHostDto addUserDto,
-                                                                      @RequestHeader("Authorization")String authToken) {
-        try {
-            authToken = authToken.replace("Bearer ", "");
-            log.info(String.valueOf(id));
-            AddUserAsHostDto addUser = service.enrollUserAsHost(id,addUserDto,authToken);
-            return ResponseEntity.status(HttpStatus.OK).body(
-                    new ApiResponse<>(
-                            HttpStatus.OK,
-                                    "New user with email: "+addUser.getUserEmail()+" has been added successfully!",
-                            addUser
-                    ));
-        }
-        catch (Exception e) {
-            log.info(e.getMessage());
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(
-                    new ApiResponse<>(
-                            HttpStatus.CONFLICT,
-                            e.getMessage(),
-                            null
-                    ));
-        }
-    }*/
     @GetMapping("/host/viewparticipants/{eventId}")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<ApiResponse<Set<EventParticipantDto>>> participantsToEvent(@PathVariable("eventId")UUID id,
+    public ResponseEntity<ApiResponse<List<Attendee>>> participantsToEvent(@PathVariable("eventId")UUID id,
                                                                                   @RequestHeader("Authorization")String authToken) {
         try {
             authToken = authToken.replace("Bearer ", "");
             log.info(String.valueOf(id));
-            Set<EventParticipantDto> participants = service.viewEventParticipants(id, authToken);
+            List<Attendee> participants = service.viewEventParticipants(id, authToken);
             return ResponseEntity.status(HttpStatus.OK).body(
                     new ApiResponse<>(
                             HttpStatus.OK,
@@ -182,7 +169,34 @@ public class EventController {
         }
     }
 
-    /*@DeleteMapping("/host/remove-participant")
+    @PatchMapping("/host/adduser")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<ApiResponse<String>> addUserAsHost(@RequestParam("eventId")UUID eventId,
+                                                                      @RequestBody EmailDto userEmail,
+                                                                      @RequestHeader("Authorization")String authToken) {
+        try {
+            authToken = authToken.replace("Bearer ", "");
+            log.info(String.valueOf(eventId));
+            String email = service.enrollUserAsHost(eventId,userEmail.getUserEmail(),authToken);
+            return ResponseEntity.status(HttpStatus.OK).body(
+                    new ApiResponse<>(
+                            HttpStatus.OK,
+                                    "You have successfully Added: "+email,
+                            email
+                    ));
+        }
+        catch (Exception e) {
+            log.info(e.getMessage());
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(
+                    new ApiResponse<>(
+                            HttpStatus.CONFLICT,
+                            e.getMessage(),
+                            null
+                    ));
+        }
+    }
+
+    @DeleteMapping("/host/remove-participant")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ApiResponse<Set<Attendee>>> removeParticipantAsHost(@RequestParam("eventId")UUID eventId,
                                                                               @RequestParam("participantId") UUID participantId,
@@ -191,7 +205,7 @@ public class EventController {
             authToken = authToken.replace("Bearer ", "");
 
             String attendee = service.deleteParticipant(eventId, participantId, authToken);
-                                    return ResponseEntity.status(HttpStatus.OK).body(
+            return ResponseEntity.status(HttpStatus.OK).body(
                     new ApiResponse<>(
                             HttpStatus.OK,
                             "Participant "+ attendee +" has been removed successfully successfully!",
@@ -207,9 +221,9 @@ public class EventController {
                             null
                     ));
         }
-    }*/
+    }
 
-    /*@PatchMapping("/host/archive-event/{eventId}")
+    @PatchMapping("/host/archive-event/{eventId}")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ApiResponse<EventDetailsDto>> archiveEventAsHost(@PathVariable("eventId") UUID eventId,
                                                                                       @RequestHeader("Authorization")String authToken) {
@@ -235,7 +249,7 @@ public class EventController {
                             null
                     ));
         }
-    }*/
+    }
     @GetMapping("/browse")
     public ResponseEntity<ApiResponse<BrowseEventsDto>> browseEvents(@RequestParam(name = "page", defaultValue = "0") int page,
                                                                            @RequestParam(name = "size", defaultValue = "3") int size) {
@@ -334,16 +348,16 @@ public class EventController {
                     ));
         }
     }
-    @GetMapping("/by/{organizerId}")
+    @GetMapping("/byorganizer")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<ApiResponse<Set<EventDetailsDto>>> viewOrganizerSpecificEvents(@PathVariable("organizerId")UUID organizerId) {
+    public ResponseEntity<ApiResponse<Set<EventDetailsDto>>> viewOrganizerSpecificEvents(@RequestHeader("Authorization")String authToken) {
         try {
-            log.info(String.valueOf(organizerId));
+            authToken = authToken.replace("Bearer ", "");
             return ResponseEntity.status(HttpStatus.OK).body(
                     new ApiResponse<>(
                             HttpStatus.OK,
-                            "Events by organizer "+organizerId+" fetched successfully!",
-                            service.getEventsOrganizedBy(organizerId)
+                            "Events organized by current user fetched successfully!",
+                            service.getEventsOrganizedBy(authToken)
                     ));
         }
         catch (Exception e) {

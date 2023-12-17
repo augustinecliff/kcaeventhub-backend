@@ -43,6 +43,7 @@ public class JWTUtil {
         claims.put("email", userPrincipal.getEmail());
         claims.put("firstName", userPrincipal.getFirstName());
         claims.put("lastName", userPrincipal.getLastName());
+        claims.put("userRole", userPrincipal.getUserRole());
         return Jwts.builder()
                 .setClaims(claims)
                 .setIssuedAt(new Date())
